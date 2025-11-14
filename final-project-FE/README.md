@@ -8,9 +8,9 @@ R (Read): membaca semua tugas yang terdaftar di suatu mata kuliah
 U (Update):  memperbarui detail seperti nama tugas, deskripsi, hingga tenggatnya
 D (Delete): menghapus mata kuliah yang telah selesai atau yang sudah tidak diperlukan
 
+saya menggunakan Framework React dan Vite
 
-
-myproject-frontend/
+final-project-FE/
 │
 ├── public/            # Berisi assets statis (ikon, gambar)
 │
