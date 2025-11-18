@@ -74,7 +74,7 @@ export default function TugasForm({ onCreated }) {
           <input
             type="text"
             className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition duration-200 placeholder-gray-400"
-            placeholder="Contoh: Laporan Praktikum Kimia"
+            placeholder="Contoh: Decimal to Binary"
             value={nama}
             onChange={(e) => setNama(e.target.value)}
             required

@@ -27,7 +27,7 @@ export default function App() {
             TUGAS TRACKER
           </h1>
           <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-            Jangan Takut Kelupaan Deadline...
+            YOKK Tugasnya diselesain YOKK
           </p>
         </header>
 
@@ -72,12 +72,6 @@ export default function App() {
           </section>
 
         </div>
-
-        <footer className="text-center text-gray-400 text-sm py-10 mt-12 border-t border-gray-200">
-          <p>&copy; {new Date().getFullYear()} Tugas Tracker App.</p>
-          <p className="text-xs mt-1 opacity-75">Dibangun dengan React & Tailwind CSS</p>
-        </footer>
-
       </main>
     </div>
   );
