@@ -1,35 +1,36 @@
-import { useEffect, useState } from "react";
 
-export default function MataKuliahList() {
+import { useEffect, useState } from "react";
+import MataKuliahItem from './MataKuliahItem';
+
+
+export default function MataKuliahList({ refreshTrigger }) {
   const [list, setList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  const API_URL = "https://pekris-webdev.vercel.app/api/matkul";
-  const TOKEN = "QN5gyknoKrcIUpydtsMdoLrTYTYpYS7i";
+  const API_URL ="http://localhost:8080/api/matkul";
+
+
+  async function loadData() {
+    setLoading(true);
+    setError(""); 
+    try {
+      const res = await fetch(API_URL);
+
+      if (!res.ok) throw new Error("Gagal mengambil data mata kuliah");
+
+      const data = await res.json();
+      setList(Array.isArray(data) ? data : []);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   useEffect(() => {
-    async function loadData() {
-      try {
-        const res = await fetch(API_URL, {
-          headers: {
-            Authorization: `Bearer ${TOKEN}`,
-          },
-        });
-
-        if (!res.ok) throw new Error("Gagal mengambil data");
-
-        const data = await res.json();
-        setList(Array.isArray(data) ? data : []);
-      } catch (err) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    }
-
     loadData();
-  }, []);
+  }, [refreshTrigger]);
 
   if (loading)
     return (
@@ -74,30 +75,11 @@ export default function MataKuliahList() {
         ) : (
           <div className="grid gap-5 md:grid-cols-2">
             {list.map((item) => (
-              <div
+              <MataKuliahItem
                 key={item.id}
-                className="group bg-white p-5 rounded-xl border border-purple-100 shadow-sm hover:shadow-md hover:border-purple-300 transition-all duration-200 flex flex-col justify-between h-full"
-              >
-                <div>
-                  <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-bold text-lg text-gray-800 group-hover:text-purple-700 transition-colors">
-                      {item.nama}
-                    </h3>
-                    <span className="flex-shrink-0 bg-yellow-300 text-purple-900 text-xs font-bold px-2.5 py-1 rounded-md shadow-sm">
-                      {item.sks} SKS
-                    </span>
-                  </div>
-                  <p className="text-gray-600 text-sm leading-relaxed">
-                    {item.deskripsi || "Tidak ada deskripsi tersedia."}
-                  </p>
-                </div>
-                
-                <div className="mt-4 pt-3 border-t border-gray-50">
-                    <span className="text-[10px] text-gray-400 font-mono bg-gray-100 px-1.5 py-0.5 rounded">
-                        ID: {item.id}
-                    </span>
-                </div>
-              </div>
+                matkul={item}
+                reload={loadData} 
+              />
             ))}
           </div>
         )}

@@ -1,6 +1,7 @@
+
 import React, { useState } from "react";
 
-const TOKEN = "QN5gyknoKrcIUpydtsMdoLrTYTYpYS7i";
+const API_BASE_URL = "http://localhost:8080/api/tugas";
 
 export default function TugasItem({ tugas, reload }) {
   const [isDeleting, setIsDeleting] = useState(false);
@@ -8,28 +9,60 @@ export default function TugasItem({ tugas, reload }) {
 
   if (!tugas) return null;
 
+  const getStatusColor = (status) => {
+    switch (status) {
+      case "SELESAI":
+        return "bg-green-100 text-green-800 border-green-200";
+      default: 
+        return "bg-yellow-100 text-yellow-800 border-yellow-200";
+    }
+  };
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString("id-ID", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+    });
+  };
+
   async function toggleStatus() {
     setIsUpdating(true);
-    const newStatus = tugas.status === "SELESAI" ? "BELUM_DIKERJAKAN" : "SELESAI";
+    let newStatus;
+    
+    if (tugas.status === "SELESAI") {
+        newStatus = "BELUM_DIKERJAKAN";
+    } else { 
+        newStatus = "SELESAI";
+    }
+
+    const updatePayload = {
+        nama: tugas.nama,
+        deskripsi: tugas.deskripsi,
+        deadline: tugas.deadline,
+        status: newStatus, 
+        mataKuliahId: tugas.mataKuliahId || tugas.mataKuliah?.id 
+    };
 
     try {
-      const res = await fetch(`https://pekris-webdev.vercel.app/api/tugas/${tugas.id}`, {
+      const res = await fetch(`${API_BASE_URL}/${tugas.id}`, {
         method: "PUT",
         headers: { 
             "Content-Type": "application/json",
-            Authorization: `Bearer ${TOKEN}` 
         },
-        body: JSON.stringify({
-            ...tugas,
-            status: newStatus,
-            mataKuliahId: tugas.mataKuliahId || tugas.mataKuliah?.id
-        })
+        body: JSON.stringify(updatePayload)
       });
 
-      if (!res.ok) throw new Error("Gagal update status");
-      reload();
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(`Gagal update status: ${errorText || res.statusText}`);
+      }
+      
+      reload(); 
     } catch (err) {
-      alert("Gagal update: " + err.message);
+      alert("Gagal update status: " + err.message);
     } finally {
       setIsUpdating(false);
     }
@@ -40,78 +73,66 @@ export default function TugasItem({ tugas, reload }) {
 
     setIsDeleting(true);
     try {
-      const res = await fetch(`https://pekris-webdev.vercel.app/api/tugas/${tugas.id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${TOKEN}` },
-      });
+        const res = await fetch(`${API_BASE_URL}/${tugas.id}`, {
+            method: "DELETE",
+        });
 
-      if (!res.ok) throw new Error("Gagal menghapus tugas");
-      reload();
+        if (!res.ok) throw new Error("Gagal menghapus tugas");
+        
+        reload(); 
     } catch (err) {
-      alert(err.message);
+        alert(err.message);
     } finally {
-      setIsDeleting(false);
+        setIsDeleting(false);
     }
   }
 
-  const getStatusColor = (status) => {
-    return status === "SELESAI"
-      ? "bg-green-100 text-green-800 border-green-200"
-      : "bg-yellow-100 text-yellow-800 border-yellow-200";
-  };
-
-  const formatDate = (dateString) => {
-    try {
-        return new Date(dateString).toLocaleDateString("id-ID", {
-            weekday: "long", year: "numeric", month: "long", day: "numeric",
-        });
-    } catch (e) {
-        return dateString;
-    }
-  };
-
   return (
-    <div className={`rounded-xl shadow-sm border transition-all duration-200 flex flex-col h-full bg-white border-purple-100 hover:shadow-md`}>
-      <div className="bg-purple-50 px-5 py-3 border-b border-purple-100 flex justify-between items-center">
-        <span className="text-xs font-bold text-purple-700 uppercase tracking-wider">
-           {tugas.mataKuliah?.nama || "Matkul Umum"}
-        </span>
-        <span className={`text-[10px] font-bold px-2 py-1 rounded-full border ${getStatusColor(tugas.status)}`}>
-          {tugas.status ? tugas.status.replace("_", " ") : "STATUS"}
-        </span>
-      </div>
+    <div className="bg-white rounded-xl shadow-sm border border-purple-100 hover:shadow-md transition-shadow duration-200 overflow-hidden flex flex-col h-full">
+        
+        <div className="bg-purple-50 px-5 py-3 border-b border-purple-100 flex justify-between items-center">
+            <span className="text-xs font-bold text-purple-700 uppercase tracking-wider">
+               {tugas.mataKuliah?.nama || "Matkul Umum"}
+            </span>
+            <span className={`text-[10px] font-bold px-2 py-1 rounded-full border ${getStatusColor(tugas.status)}`}>
+              {tugas.status.replace("_", " ")}
+            </span>
+        </div>
 
-      <div className="p-5 flex-grow flex flex-col justify-between">
-        <div>
-            <h3 className={`text-lg font-bold text-gray-800 mb-2 ${tugas.status === "SELESAI" ? "line-through text-gray-400" : ""}`}>
-                {tugas.nama}
+        <div className="p-5 flex-grow">
+            <h3 className="text-lg font-bold text-gray-800 mb-2 leading-tight">
+              {tugas.nama}
             </h3>
             <p className="text-gray-600 text-sm line-clamp-3 mb-4">
-                {tugas.deskripsi || "-"}
+                {tugas.deskripsi || "Tidak ada deskripsi tambahan."}
             </p>
+            <div className="flex items-center gap-2 text-sm text-gray-500 mt-auto">
+                <span>Deadline:</span>
+                <span className="font-medium text-red-500">
+                    {formatDate(tugas.deadline)}
+                </span>
+            </div>
         </div>
         
-        <div className="flex items-center justify-between pt-4 border-t border-gray-50 mt-2">
-          <div className="flex flex-col">
-             <span className="text-[10px] text-gray-400 uppercase font-bold">Deadline</span>
-             <span className="text-xs font-medium text-red-500">
-                {formatDate(tugas.deadline)}
-             </span>
-          </div>
+        <div className="flex items-center justify-between p-4 border-t border-gray-100 mt-auto">
+          
+          <span className="text-[10px] text-gray-400 font-mono bg-gray-100 px-1.5 py-0.5 rounded truncate">
+            ID: {tugas.id}
+          </span>
 
           <div className="flex gap-2">
             <button
                 onClick={toggleStatus}
-                disabled={isUpdating}
-                className={`p-2 rounded-lg transition-colors ${tugas.status === 'SELESAI' ? 'bg-yellow-100 text-yellow-600' : 'bg-green-100 text-green-600 hover:bg-green-200'}`}
-                title={tugas.status === 'SELESAI' ? "Batalkan Selesai" : "Tandai Selesai"}
+                disabled={isUpdating || isDeleting}
+                className={`p-2 rounded-lg transition-colors border ${isUpdating ? 'bg-gray-200 text-gray-500' : 'bg-yellow-50 text-yellow-600 hover:bg-yellow-100 border-yellow-200'}`}
+                title={`Ubah Status`}
             >
-                {isUpdating ? "⏳" : (tugas.status === 'SELESAI' ? "↩️" : "✅")}
+                {isUpdating ? "⏳" : "🔄"}
             </button>
 
             <button 
                 onClick={remove} 
-                disabled={isDeleting}
+                disabled={isDeleting || isUpdating}
                 className="p-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 transition-colors border border-red-100"
                 title="Hapus Tugas"
             >
@@ -119,7 +140,6 @@ export default function TugasItem({ tugas, reload }) {
             </button>
           </div>
         </div>
-      </div>
     </div>
   );
 }
